@@ -1,7 +1,7 @@
 {
   "name": "draftly-backend",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "nodemon src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js"
   },

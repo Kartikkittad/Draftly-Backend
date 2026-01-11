@@ -1,4 +1,5 @@
 import swaggerUi from "swagger-ui-express";
+import { Express } from "express";
 
 const swaggerSpec = {
   openapi: "3.0.0",
@@ -7,11 +8,7 @@ const swaggerSpec = {
     version: "1.0.0",
     description: "Backend APIs for Draftly Email Builder",
   },
-  servers: [
-    {
-      url: "http://localhost:4000",
-    },
-  ],
+  servers: process.env.API_BASE_URL ? [{ url: process.env.API_BASE_URL }] : [],
   components: {
     securitySchemes: {
       bearerAuth: {
@@ -103,7 +100,6 @@ const swaggerSpec = {
                   fromEmailUsername: { type: "string", example: "Draftly" },
                   htmlBody: { type: "string", example: "<h1>Hello</h1>" },
                   editorJson: { type: "object" },
-
                   isComponent: {
                     type: "boolean",
                     example: false,
@@ -116,9 +112,7 @@ const swaggerSpec = {
           },
         },
         responses: {
-          "200": {
-            description: "Template created",
-          },
+          "200": { description: "Template created" },
         },
       },
     },
@@ -135,66 +129,17 @@ const swaggerSpec = {
               schema: {
                 type: "object",
                 properties: {
-                  page: {
-                    type: "integer",
-                    example: 1,
-                    description: "Page number (default: 1)",
-                  },
-                  limit: {
-                    type: "integer",
-                    example: 5,
-                    description: "Items per page (default: 5)",
-                  },
-                  query: {
-                    type: "string",
-                    example: "welcome",
-                    description: "Search by template name or subject",
-                  },
-                  isComponent: {
-                    type: "boolean",
-                    example: false,
-                    description:
-                      "false = templates, true = components, omit = all",
-                  },
+                  page: { type: "integer", example: 1 },
+                  limit: { type: "integer", example: 5 },
+                  query: { type: "string", example: "welcome" },
+                  isComponent: { type: "boolean", example: false },
                 },
               },
             },
           },
         },
         responses: {
-          "200": {
-            description: "Paginated templates list",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    data: {
-                      type: "object",
-                      properties: {
-                        data: {
-                          type: "array",
-                          items: { type: "object" },
-                        },
-                        count: {
-                          type: "integer",
-                          example: 25,
-                        },
-                        page: {
-                          type: "integer",
-                          example: 1,
-                        },
-                        limit: {
-                          type: "integer",
-                          example: 5,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
+          "200": { description: "Paginated templates list" },
         },
       },
     },
@@ -221,15 +166,17 @@ const swaggerSpec = {
           },
         },
         responses: {
-          "200": {
-            description: "File uploaded",
-          },
+          "200": { description: "File uploaded" },
         },
       },
     },
   },
 };
 
-export default function setupSwagger(app: any) {
+export default function setupSwagger(app: Express) {
+  if (process.env.NODE_ENV === "production") {
+    return;
+  }
+
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }

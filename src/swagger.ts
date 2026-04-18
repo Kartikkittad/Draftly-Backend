@@ -1,4 +1,3 @@
-import swaggerUi from "swagger-ui-express";
 import { Express } from "express";
 
 const swaggerSpec = {
@@ -179,9 +178,51 @@ export default function setupSwagger(app: Express) {
     res.send(swaggerSpec);
   });
 
-  app.use("/docs", swaggerUi.serve);
+  const swaggerHtml = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Draftly API Docs</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"
+    />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+      #swagger-ui {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    <script>
+      window.onload = function () {
+        window.ui = SwaggerUIBundle({
+          url: "/docs.json",
+          dom_id: "#swagger-ui",
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+          layout: "BaseLayout"
+        });
+      };
+    </script>
+  </body>
+</html>`;
 
-  // Explicit GET handlers prevent blank responses on some serverless proxies.
-  app.get("/docs", swaggerUi.setup(swaggerSpec));
-  app.get("/docs/", swaggerUi.setup(swaggerSpec));
+  app.get("/docs", (_req, res) => {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(swaggerHtml);
+  });
+
+  app.get("/docs/", (_req, res) => {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(swaggerHtml);
+  });
 }

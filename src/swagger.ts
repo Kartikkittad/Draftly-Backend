@@ -144,7 +144,7 @@ const swaggerSpec = {
     },
     "/templates/details/{id}": {
       get: {
-        summary: "Get paginated templates list by id",
+        summary: "Get templates list by id",
         tags: ["Templates"],
         security: [{ bearerAuth: [] }],
         parameters: [
@@ -155,24 +155,10 @@ const swaggerSpec = {
             schema: { type: "string" },
             description: "User id to list templates for",
           },
-          {
-            name: "page",
-            in: "query",
-            required: false,
-            schema: { type: "integer", default: 1 },
-            description: "Page number",
-          },
-          {
-            name: "limit",
-            in: "query",
-            required: false,
-            schema: { type: "integer", default: 5 },
-            description: "Items per page",
-          },
         ],
         responses: {
           "200": {
-            description: "Paginated template list",
+            description: "Template list",
             content: {
               "application/json": {
                 schema: {
@@ -183,8 +169,6 @@ const swaggerSpec = {
                       properties: {
                         data: { type: "array", items: { type: "object" } },
                         count: { type: "integer" },
-                        page: { type: "integer" },
-                        limit: { type: "integer" },
                         id: { type: "string" },
                       },
                     },

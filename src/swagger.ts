@@ -111,7 +111,21 @@ const swaggerSpec = {
           },
         },
         responses: {
-          "200": { description: "Template created" },
+          "201": {
+            description: "Template created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Template created successfully" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid input" },
+          "409": { description: "Template name already exists" },
         },
       },
     },
@@ -138,13 +152,29 @@ const swaggerSpec = {
           },
         },
         responses: {
-          "200": { description: "Paginated templates list" },
+          "200": {
+            description: "Paginated templates list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "array", items: { type: "object" } },
+                    count: { type: "integer" },
+                    page: { type: "integer" },
+                    limit: { type: "integer" },
+                    query: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
     "/templates/details/{id}": {
       get: {
-        summary: "Get paginated templates list by id",
+        summary: "Get single template details by id",
         tags: ["Templates"],
         security: [{ bearerAuth: [] }],
         parameters: [
@@ -153,46 +183,24 @@ const swaggerSpec = {
             in: "path",
             required: true,
             schema: { type: "string" },
-            description: "User id to list templates for",
-          },
-          {
-            name: "page",
-            in: "query",
-            required: false,
-            schema: { type: "integer", default: 1 },
-            description: "Page number",
-          },
-          {
-            name: "limit",
-            in: "query",
-            required: false,
-            schema: { type: "integer", default: 5 },
-            description: "Items per page",
+            description: "Template id",
           },
         ],
         responses: {
           "200": {
-            description: "Paginated template list",
+            description: "Template details",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    data: {
-                      type: "object",
-                      properties: {
-                        data: { type: "array", items: { type: "object" } },
-                        count: { type: "integer" },
-                        page: { type: "integer" },
-                        limit: { type: "integer" },
-                        id: { type: "string" },
-                      },
-                    },
+                    data: { type: "object" },
                   },
                 },
               },
             },
           },
+          "404": { description: "Template not found" },
           "500": { description: "Server error" },
         },
       },

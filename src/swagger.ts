@@ -174,10 +174,6 @@ const swaggerSpec = {
 };
 
 export default function setupSwagger(app: Express) {
-  if (process.env.NODE_ENV === "production") {
-    return;
-  }
-
   app.get("/docs.json", (_req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.send(swaggerSpec);

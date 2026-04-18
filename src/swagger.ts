@@ -111,7 +111,19 @@ const swaggerSpec = {
           },
         },
         responses: {
-          "200": { description: "Template created" },
+          "201": {
+            description: "Template created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Template created successfully" },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -138,7 +150,23 @@ const swaggerSpec = {
           },
         },
         responses: {
-          "200": { description: "Paginated templates list" },
+          "200": {
+            description: "Paginated templates list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "array", items: { type: "object" } },
+                    count: { type: "integer" },
+                    page: { type: "integer" },
+                    limit: { type: "integer" },
+                    query: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },

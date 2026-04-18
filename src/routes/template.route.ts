@@ -4,9 +4,8 @@ import Template from "../models/Template";
 import mongoose from "mongoose";
 
 const router = Router();
-const templates: any[] = [];
 
-router.post("/create", authMiddleware, (req, res) => {
+router.post("/create", authMiddleware, async (req, res) => {
   const {
     name,
     subject,
@@ -16,61 +15,77 @@ router.post("/create", authMiddleware, (req, res) => {
     isComponent = false,
   } = req.body;
 
-  const template = {
-    id: Date.now(),
-    name,
-    subject,
-    htmlBody,
-    editorJson,
-    fromEmailUsername,
-    isComponent: Boolean(isComponent),
-    createdAt: new Date(),
-  };
+  const userId = (req as any)?.user?.userId;
 
-  templates.push(template);
+  if (!userId || !mongoose.Types.ObjectId.isValid(String(userId))) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
 
-  res.json({
-    data: template,
-  });
+  try {
+    await Template.create({
+      name,
+      subject,
+      htmlBody,
+      editorJson,
+      fromEmailUsername,
+      isComponent: Boolean(isComponent),
+      userId,
+    });
+
+    return res.status(201).json({
+      message: "Template created successfully",
+    });
+  } catch (error) {
+    console.error("Failed to create template", error);
+    return res.status(500).json({ message: "Failed to create template" });
+  }
 });
 
-router.post("/list", authMiddleware, (req, res) => {
+router.post("/list", authMiddleware, async (req, res) => {
   let { page = 1, limit = 5, isComponent, query } = req.body;
+  const userId = (req as any)?.user?.userId;
+
+  if (!userId || !mongoose.Types.ObjectId.isValid(String(userId))) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
 
   page = Number(page);
   limit = Number(limit);
+  if (Number.isNaN(page) || page < 1) page = 1;
+  if (Number.isNaN(limit) || limit < 1) limit = 5;
 
-  let result = templates;
+  try {
+    const filter: any = { userId };
 
-  if (typeof isComponent === "boolean") {
-    result = result.filter((t) => t.isComponent === isComponent);
-  }
+    if (typeof isComponent === "boolean") {
+      filter.isComponent = isComponent;
+    }
 
-  if (query && typeof query === "string") {
-    const q = query.toLowerCase();
-    result = result.filter(
-      (t) =>
-        t.name?.toLowerCase().includes(q) ||
-        t.subject?.toLowerCase().includes(q)
-    );
-  }
+    if (query && typeof query === "string") {
+      filter.$or = [
+        { name: { $regex: query, $options: "i" } },
+        { subject: { $regex: query, $options: "i" } },
+      ];
+    }
 
-  const total = result.length;
+    const total = await Template.countDocuments(filter);
+    const templates = await Template.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
 
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
-
-  const paginatedData = result.slice(startIndex, endIndex);
-
-  res.json({
-    data: {
-      data: paginatedData,
+    return res.json({
+      data: templates,
       count: total,
       page,
       limit,
       query: query || "",
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Failed to list templates", error);
+    return res.status(500).json({ message: "Failed to list templates" });
+  }
 });
 
 router.get("/details/:id", authMiddleware, async (req, res) => {
@@ -94,19 +109,10 @@ router.get("/details/:id", authMiddleware, async (req, res) => {
       });
     }
 
-    // Fallback for in-memory local templates.
-    const numericId = Number(id);
-    const filtered =
-      Number.isNaN(numericId) === false
-        ? templates.filter((t) => t.userId === numericId || t.id === numericId)
-        : [];
-
     return res.json({
-      data: {
-        data: filtered,
-        count: filtered.length,
-        id,
-      },
+      data: [],
+      count: 0,
+      id,
     });
   } catch (error) {
     console.error("Failed to fetch template details", error);
@@ -114,38 +120,71 @@ router.get("/details/:id", authMiddleware, async (req, res) => {
   }
 });
 
-router.get("/:id", authMiddleware, (req, res) => {
-  const template = templates.find((t) => t.id === Number(req.params.id));
+router.get("/:id", authMiddleware, async (req, res) => {
+  const rawId = req.params.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  const userId = (req as any)?.user?.userId;
 
-  if (!template) {
-    return res.status(404).json({ message: "Template not found" });
+  if (!userId || !mongoose.Types.ObjectId.isValid(String(userId))) {
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
-  res.json({
-    data: template,
-  });
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid template id" });
+  }
+
+  try {
+    const template = await Template.findOne({ _id: id, userId }).lean();
+
+    if (!template) {
+      return res.status(404).json({ message: "Template not found" });
+    }
+
+    return res.json({
+      data: template,
+    });
+  } catch (error) {
+    console.error("Failed to get template", error);
+    return res.status(500).json({ message: "Failed to get template" });
+  }
 });
 
-router.put("/:id", authMiddleware, (req, res) => {
-  const index = templates.findIndex((t) => t.id === Number(req.params.id));
+router.put("/:id", authMiddleware, async (req, res) => {
+  const rawId = req.params.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  const userId = (req as any)?.user?.userId;
 
-  if (index === -1) {
-    return res.status(404).json({ message: "Template not found" });
+  if (!userId || !mongoose.Types.ObjectId.isValid(String(userId))) {
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
-  templates[index] = {
-    ...templates[index],
-    ...req.body,
-    isComponent:
-      typeof req.body.isComponent === "boolean"
-        ? req.body.isComponent
-        : templates[index].isComponent,
-    updatedAt: new Date(),
-  };
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid template id" });
+  }
 
-  res.json({
-    data: templates[index],
-  });
+  try {
+    const updatedTemplate = await Template.findOneAndUpdate(
+      { _id: id, userId },
+      {
+        ...req.body,
+        ...(typeof req.body.isComponent === "boolean"
+          ? { isComponent: req.body.isComponent }
+          : {}),
+      },
+      { new: true }
+    ).lean();
+
+    if (!updatedTemplate) {
+      return res.status(404).json({ message: "Template not found" });
+    }
+
+    return res.json({
+      data: updatedTemplate,
+    });
+  } catch (error) {
+    console.error("Failed to update template", error);
+    return res.status(500).json({ message: "Failed to update template" });
+  }
 });
 
 export default router;

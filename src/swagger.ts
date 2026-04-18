@@ -231,5 +231,14 @@ const swaggerSpec = {
 };
 
 export default function setupSwagger(app: any) {
-  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.get("/docs.json", (_req: any, res: any) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send(swaggerSpec);
+  });
+
+  app.use("/docs", swaggerUi.serve);
+
+  // Explicit GET handlers prevent blank responses on some serverless proxies.
+  app.get("/docs", swaggerUi.setup(swaggerSpec));
+  app.get("/docs/", swaggerUi.setup(swaggerSpec));
 }

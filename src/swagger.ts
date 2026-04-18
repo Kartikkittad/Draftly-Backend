@@ -178,5 +178,14 @@ export default function setupSwagger(app: Express) {
     return;
   }
 
-  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.get("/docs.json", (_req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send(swaggerSpec);
+  });
+
+  app.use("/docs", swaggerUi.serve);
+
+  // Explicit GET handlers prevent blank responses on some serverless proxies.
+  app.get("/docs", swaggerUi.setup(swaggerSpec));
+  app.get("/docs/", swaggerUi.setup(swaggerSpec));
 }

@@ -144,39 +144,7 @@ const swaggerSpec = {
     },
     "/templates/details/{id}": {
       get: {
-        summary: "Get template details by id",
-        tags: ["Templates"],
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            schema: { type: "string" },
-            description: "Template id (Mongo ObjectId or numeric local id)",
-          },
-        ],
-        responses: {
-          "200": {
-            description: "Template details",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    data: { type: "object" },
-                  },
-                },
-              },
-            },
-          },
-          "404": { description: "Template not found" },
-        },
-      },
-    },
-    "/templates/details/list/{id}": {
-      get: {
-        summary: "List templates by id (paginated)",
+        summary: "Get paginated templates list by id",
         tags: ["Templates"],
         security: [{ bearerAuth: [] }],
         parameters: [
@@ -203,7 +171,28 @@ const swaggerSpec = {
           },
         ],
         responses: {
-          "200": { description: "Paginated template details list" },
+          "200": {
+            description: "Paginated template list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "object",
+                      properties: {
+                        data: { type: "array", items: { type: "object" } },
+                        count: { type: "integer" },
+                        page: { type: "integer" },
+                        limit: { type: "integer" },
+                        id: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
           "500": { description: "Server error" },
         },
       },

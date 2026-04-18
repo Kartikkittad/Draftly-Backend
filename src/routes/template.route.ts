@@ -76,38 +76,6 @@ router.post("/list", authMiddleware, (req, res) => {
 router.get("/details/:id", authMiddleware, async (req, res) => {
   const rawId = req.params.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
-
-  try {
-    // First try MongoDB ObjectId templates (production source of truth).
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      const dbTemplate = await Template.findById(id).lean();
-      if (dbTemplate) {
-        return res.json({ data: dbTemplate });
-      }
-    }
-
-    // Fallback for current in-memory templates used by local flow.
-    const numericId = Number(id);
-    const template =
-      Number.isNaN(numericId) === false
-        ? templates.find((t) => t.id === numericId)
-        : undefined;
-
-    if (!template) {
-      return res.status(404).json({ message: "Template not found" });
-    }
-
-    return res.json({ data: template });
-  } catch (error) {
-    console.error("Failed to fetch template details", error);
-    return res.status(500).json({ message: "Failed to fetch template details" });
-  }
-});
-
-router.get("/details/list/:id", authMiddleware, async (req, res) => {
-  const rawId = req.params.id;
-  const id = Array.isArray(rawId) ? rawId[0] : rawId;
-
   let page = Number(req.query.page ?? 1);
   let limit = Number(req.query.limit ?? 5);
 
@@ -158,10 +126,8 @@ router.get("/details/list/:id", authMiddleware, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Failed to fetch template details list", error);
-    return res
-      .status(500)
-      .json({ message: "Failed to fetch template details list" });
+    console.error("Failed to fetch template details", error);
+    return res.status(500).json({ message: "Failed to fetch template details" });
   }
 });
 

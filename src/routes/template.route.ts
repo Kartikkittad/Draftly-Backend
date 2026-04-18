@@ -104,6 +104,67 @@ router.get("/details/:id", authMiddleware, async (req, res) => {
   }
 });
 
+router.get("/details/list/:id", authMiddleware, async (req, res) => {
+  const rawId = req.params.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
+  let page = Number(req.query.page ?? 1);
+  let limit = Number(req.query.limit ?? 5);
+
+  if (Number.isNaN(page) || page < 1) page = 1;
+  if (Number.isNaN(limit) || limit < 1) limit = 5;
+
+  try {
+    // DB-backed paginated list by userId.
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      const filter = { userId: id } as any;
+      const total = await Template.countDocuments(filter);
+      const data = await Template.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean();
+
+      return res.json({
+        data: {
+          data,
+          count: total,
+          page,
+          limit,
+          id,
+        },
+      });
+    }
+
+    // Fallback for in-memory local templates.
+    const numericId = Number(id);
+    const filtered =
+      Number.isNaN(numericId) === false
+        ? templates.filter((t) => t.userId === numericId || t.id === numericId)
+        : [];
+
+    const total = filtered.length;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const paginatedData = filtered.slice(startIndex, endIndex);
+
+    return res.json({
+      data: {
+        data: paginatedData,
+        count: total,
+        page,
+        limit,
+        id,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to fetch template details list", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to fetch template details list" });
+  }
+});
+
 router.get("/:id", authMiddleware, (req, res) => {
   const template = templates.find((t) => t.id === Number(req.params.id));
 

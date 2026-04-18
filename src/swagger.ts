@@ -174,6 +174,40 @@ const swaggerSpec = {
         },
       },
     },
+    "/templates/details/list/{id}": {
+      get: {
+        summary: "List templates by id (paginated)",
+        tags: ["Templates"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "User id to list templates for",
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 1 },
+            description: "Page number",
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 5 },
+            description: "Items per page",
+          },
+        ],
+        responses: {
+          "200": { description: "Paginated template details list" },
+          "500": { description: "Server error" },
+        },
+      },
+    },
 
     "/files/upload": {
       post: {

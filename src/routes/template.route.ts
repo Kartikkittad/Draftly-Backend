@@ -22,8 +22,24 @@ router.post("/create", authMiddleware, async (req, res) => {
   }
 
   try {
+    const normalizedName = String(name || "").trim();
+    if (!normalizedName) {
+      return res.status(400).json({ message: "Template name is required" });
+    }
+
+    const existingTemplate = await Template.findOne({
+      userId,
+      name: { $regex: `^${normalizedName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+    }).lean();
+
+    if (existingTemplate) {
+      return res.status(409).json({
+        message: "Template with this name already exists",
+      });
+    }
+
     await Template.create({
-      name,
+      name: normalizedName,
       subject,
       htmlBody,
       editorJson,
@@ -91,29 +107,24 @@ router.post("/list", authMiddleware, async (req, res) => {
 router.get("/details/:id", authMiddleware, async (req, res) => {
   const rawId = req.params.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  const userId = (req as any)?.user?.userId;
+
+  if (!userId || !mongoose.Types.ObjectId.isValid(String(userId))) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
 
   try {
-    // DB-backed list by userId (no pagination).
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      const filter = { userId: id } as any;
-      const data = await Template.find(filter)
-        .sort({ createdAt: -1 })
-        .lean();
-
-      return res.json({
-        data: {
-          data,
-          count: data.length,
-          id,
-        },
-      });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid template id" });
     }
 
-    return res.json({
-      data: [],
-      count: 0,
-      id,
-    });
+    const template = await Template.findOne({ _id: id, userId }).lean();
+
+    if (!template) {
+      return res.status(404).json({ message: "Template not found" });
+    }
+
+    return res.json({ data: template });
   } catch (error) {
     console.error("Failed to fetch template details", error);
     return res.status(500).json({ message: "Failed to fetch template details" });

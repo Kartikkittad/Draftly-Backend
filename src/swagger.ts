@@ -124,6 +124,8 @@ const swaggerSpec = {
               },
             },
           },
+          "400": { description: "Invalid input" },
+          "409": { description: "Template name already exists" },
         },
       },
     },
@@ -172,7 +174,7 @@ const swaggerSpec = {
     },
     "/templates/details/{id}": {
       get: {
-        summary: "Get templates list by id",
+        summary: "Get single template details by id",
         tags: ["Templates"],
         security: [{ bearerAuth: [] }],
         parameters: [
@@ -181,30 +183,24 @@ const swaggerSpec = {
             in: "path",
             required: true,
             schema: { type: "string" },
-            description: "User id to list templates for",
+            description: "Template id",
           },
         ],
         responses: {
           "200": {
-            description: "Template list",
+            description: "Template details",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    data: {
-                      type: "object",
-                      properties: {
-                        data: { type: "array", items: { type: "object" } },
-                        count: { type: "integer" },
-                        id: { type: "string" },
-                      },
-                    },
+                    data: { type: "object" },
                   },
                 },
               },
             },
           },
+          "404": { description: "Template not found" },
           "500": { description: "Server error" },
         },
       },

@@ -142,6 +142,38 @@ const swaggerSpec = {
         },
       },
     },
+    "/templates/details/{id}": {
+      get: {
+        summary: "Get template details by id",
+        tags: ["Templates"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Template id (Mongo ObjectId or numeric local id)",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Template details",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" },
+                  },
+                },
+              },
+            },
+          },
+          "404": { description: "Template not found" },
+        },
+      },
+    },
 
     "/files/upload": {
       post: {

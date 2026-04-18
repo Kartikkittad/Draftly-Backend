@@ -8,10 +8,14 @@ export async function connectDB() {
   }
 
   try {
+    // Reuse existing connection in serverless / warm starts.
+    if (mongoose.connection.readyState === 1) return;
+
     await mongoose.connect(MONGO_URI);
     console.log("✅ MongoDB connected");
   } catch (err) {
     console.error("❌ MongoDB connection failed", err);
-    process.exit(1);
+    // Never terminate the process in a serverless runtime.
+    throw err;
   }
 }

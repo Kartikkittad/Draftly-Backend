@@ -232,6 +232,40 @@ const swaggerSpec = {
         },
       },
     },
+    "/emails/send": {
+      post: {
+        summary: "Send email to multiple recipients",
+        tags: ["Emails"],
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["emails", "subject"],
+                properties: {
+                  emails: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Array of email addresses (max 500)",
+                    example: ["user1@example.com", "user2@example.com"]
+                  },
+                  subject: { type: "string", example: "Important Update" },
+                  html: { type: "string", example: "<h1>Hello World</h1>" },
+                  text: { type: "string", example: "Hello World" }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": { description: "Emails sent successfully" },
+          "400": { description: "Invalid input or too many emails" },
+          "500": { description: "Server error" }
+        }
+      }
+    }
   },
 };
 

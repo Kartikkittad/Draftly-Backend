@@ -13,9 +13,10 @@ router.post("/send", async (req, res) => {
     }
 
     const transporter = nodemailer.createTransport({
+      pool: true, // Use a connection pool to avoid opening 500 simultaneous connections
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: Number(process.env.SMTP_PORT) || 587,
-      secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
+      secure: Number(process.env.SMTP_PORT) === 465,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -41,21 +42,25 @@ router.post("/send", async (req, res) => {
       });
     }
 
-    const mailOptions = {
-      from: process.env.SMTP_USER,
-      to: process.env.SMTP_USER,
-      bcc: emails,
-      subject,
-      text,
-      html,
-    };
+    const sendPromises = emails.map((email: string) => {
+      return transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: email,
+        subject,
+        text,
+        html,
+      });
+    });
 
-    const info = await transporter.sendMail(mailOptions);
+    const results = await Promise.allSettled(sendPromises);
+
+    const successful = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
 
     res.status(200).json({
-      message: "Emails sent successfully",
-      accepted: info.accepted,
-      rejected: info.rejected,
+      message: "Emails processing completed",
+      successful,
+      failed,
     });
   } catch (error: any) {
     console.error("Error sending emails:", error);

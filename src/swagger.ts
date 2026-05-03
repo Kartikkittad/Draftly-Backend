@@ -252,8 +252,7 @@ const swaggerSpec = {
                     example: ["user1@example.com", "user2@example.com"]
                   },
                   subject: { type: "string", example: "Important Update" },
-                  html: { type: "string", example: "<h1>Hello World</h1>" },
-                  text: { type: "string", example: "Hello World" }
+                  html: { type: "string", example: "<h1>Hello World</h1>" }
                 }
               }
             }

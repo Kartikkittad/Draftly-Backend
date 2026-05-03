@@ -22,7 +22,7 @@ router.post("/send", async (req, res) => {
         pass: process.env.SMTP_PASS,
       },
     });
-    const { emails, subject, html, text } = req.body;
+    const { emails, subject, html } = req.body;
 
     if (!Array.isArray(emails) || emails.length === 0) {
       return res
@@ -36,9 +36,9 @@ router.post("/send", async (req, res) => {
         .json({ message: "Cannot send to more than 500 emails at a time." });
     }
 
-    if (!subject || (!html && !text)) {
+    if (!subject || !html) {
       return res.status(400).json({
-        message: "Subject and either html or text content are required.",
+        message: "Subject and html content are required.",
       });
     }
 
@@ -47,7 +47,6 @@ router.post("/send", async (req, res) => {
         from: process.env.SMTP_USER,
         to: email,
         subject,
-        text,
         html,
       });
     });
